@@ -218,6 +218,13 @@
 #define S5P_PA_CEC		S5PV210_PA_CEC
 #define S5P_SZ_CEC		SZ_4K
 
+#if defined(CONFIG_VIDEO_TSI) || defined(CONFIG_LATIN_ARIES_TV)
+/* s3c-tsi */
+#define S5PV210_PA_TSI		(0xEB400000)            
+#define S5P_PA_TSI			S5PV210_PA_TSI
+#define S5P_SZ_TSI			SZ_256     
+#endif
+
 /* TVOUT */
 #define S5PV210_PA_TVENC	(0xF9000000)
 #define S5P_PA_TVENC		S5PV210_PA_TVENC

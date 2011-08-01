@@ -200,4 +200,7 @@ extern struct platform_device s5p_device_rp;
 #endif
 void __init s3c_usb_set_serial(void);
 
-extern struct platform_device s5p_device_ace;
+extern struct platform_device s5p_device_ace;//Derek: added for TSI interface:2010.07.28
+#if defined(CONFIG_VIDEO_TSI) || defined(CONFIG_LATIN_ARIES_TV)
+extern struct platform_device s3c_device_tsi;
+#endif

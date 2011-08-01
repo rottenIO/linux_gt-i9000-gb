@@ -936,7 +936,11 @@ static int __init touchkey_init(void)
 	int retry = 3;
 #if 0
 	//update version "eclair/vendor/samsung/apps/Lcdtest/src/com/sec/android/app/lcdtest/touch_firmware.java"
+	#if defined(CONFIG_LATIN_ARIES_T) //latin-feature : bh2390.kim 2011.03.30 auto update final f/w version
+	//if ((data[1] >= 0x01) && (data[1] < 0x05)) {
+	#else
 	//if ((data[1] >= 0xa1) && (data[1] < 0xa9)) {
+	#endif
 		//set_touchkey_debug('U');
 		while (retry--) {
 			if (ISSP_main() == 0) {
@@ -949,7 +953,7 @@ static int __init touchkey_init(void)
 		}
 		if (retry <= 0) {
 			gpio_direction_output(_3_GPIO_TOUCH_EN, 0);
-#if !defined(CONFIG_ARIES_NTT)
+#if !defined(CONFIG_ARIES_NTT) && !defined(CONFIG_LATIN_ARIES_TV) //latin-feature added
 			gpio_direction_output(_3_GPIO_TOUCH_CE, 0);
 #endif
 			msleep(300);

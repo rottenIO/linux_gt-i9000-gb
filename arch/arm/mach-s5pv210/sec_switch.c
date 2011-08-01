@@ -162,10 +162,13 @@ static ssize_t disable_vbus_store(struct device *dev, struct device_attribute *a
 		return size;
 
 	secsw->pdata->set_usb_gadget_vbus(false);
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	printk("disable_vbus_store\n");
+#else
 	secsw->pdata->set_vbus_status((u8)USB_VBUS_ALL_OFF);
 	msleep(10);
 	secsw->pdata->set_usb_gadget_vbus(true);
-
+#endif
 	return size;
 }
 

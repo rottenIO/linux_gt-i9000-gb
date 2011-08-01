@@ -11,6 +11,9 @@
  * Note :
  * 	Definitions of WM8994 Register names and values.
  */
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) 
+#define CONFIG_LATIN_UPDATE_GAINCTRL// sjinu added, 2010_08_24 (wolfson young Kim)
+#endif
 
 /*
  * Register values.
@@ -70,6 +73,12 @@
 #define WM8994_DC_SERVO_ANA_2                   0x5C
 #define WM8994_ANALOGUE_HP_1                    0x60
 #define WM8994_CONTROL_INTERFACE                0x101
+
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // sjinu added, 2010_08_24 (wolfson young Kim)
+#define WM8994_ROBOTICS_REG1                    0x102
+#define WM8994_ROBOTICS_REG2                    0x817
+#endif
+
 #define WM8994_WRITE_SEQUENCER_CTRL_1           0x110
 #define WM8994_WRITE_SEQUENCER_CTRL_2           0x111
 #define WM8994_AIF1_CLOCKING_1                  0x200

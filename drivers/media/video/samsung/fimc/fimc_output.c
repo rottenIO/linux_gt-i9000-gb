@@ -1213,6 +1213,17 @@ int fimc_reqbufs_output(void *fh, struct v4l2_requestbuffers *b)
 	int ctx_id = ((struct fimc_prv_data *)fh)->ctx_id;
 	int ret = -1, i;
 
+#if defined(CONFIG_LATIN_ARIES_TV) // ys325.chang DTV black screen problem
+	dma_addr_t *curr = &ctrl->mem.curr;
+	dma_addr_t end;
+	u32 width = ctrl->fb.lcd_hres;
+	u32 height = ctrl->fb.lcd_vres;
+	u32  size;
+
+	end = ctrl->mem.base + ctrl->mem.size;
+	size = PAGE_ALIGN(width * height * 4);
+	void *dst_mem = NULL;
+#endif
 	ctx = &ctrl->out->ctx[ctx_id];
 	buf = &ctx->overlay.buf;
 	mode = ctx->overlay.mode;
@@ -1256,6 +1267,16 @@ int fimc_reqbufs_output(void *fh, struct v4l2_requestbuffers *b)
 				}
 			}
 
+#if defined(CONFIG_LATIN_ARIES_TV) // ys325.chang DTV black screen problem
+			/* clear buffer */
+			dst_mem = (void *)ioremap((int)*curr, size*FIMC_OUTBUFS);
+			if (dst_mem) {
+				memset(dst_mem, 0x0, size*FIMC_OUTBUFS);
+				iounmap(dst_mem);
+			} else
+				fimc_warn("%s: Failed to clear destination buffers\n",
+							__func__);
+#else
 			/* clear destination buffer address */
 			ctrl->mem.curr = ctx->dst[0].base[FIMC_ADDR_Y];
 			for (i = 0; i < FIMC_OUTBUFS; i++) {
@@ -1266,6 +1287,7 @@ int fimc_reqbufs_output(void *fh, struct v4l2_requestbuffers *b)
 				ctx->dst[i].base[FIMC_ADDR_CR] = 0;
 				ctx->dst[i].length[FIMC_ADDR_CR] = 0;
 			}
+#endif		
 			break;
 		default:
 			break;

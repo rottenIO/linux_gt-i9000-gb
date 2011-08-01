@@ -1686,4 +1686,12 @@ struct s5ka3dfx_reg s5ka3dfx_QCIF[] = { /* 176 x 144 */
 	{ 0xc5, 0x90 },
 	{ 0x7a, 0x03 },
 };
+
+// latin_cam : VT Cam Anti-banding
+struct s5ka3dfx_reg  s5ka3dfx_anti_banding_60Hz[] = {
+		// Flicker_60Hz_setting 
+		{0xef, 0x03},
+		{0x00, 0x07},
+};
+// sec_zerokul 2011.3.18 
 #endif

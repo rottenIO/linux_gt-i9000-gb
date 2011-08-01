@@ -700,7 +700,11 @@ static void samsung_enable_function(int mode)
 		CSY_DBG_ESS("Can't find product. It is not changed !\n");
 		return ;
 	}
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	else if((mode != USBSTATUS_VTP) && (mode != USBSTATUS_ASKON) && (mode != USBSTATUS_ADB)) {
+#else
 	else if((mode != USBSTATUS_VTP) && (mode != USBSTATUS_ASKON)) {
+#endif
 		CSY_DBG_ESS("Save usb mode except tethering and askon (mode=%d)\n", mode);
 		dev->current_usb_mode = mode;
 	}
@@ -753,6 +757,12 @@ static ssize_t tethering_switch_store(struct device *dev, struct device_attribut
 	if (value) {
 		printk("Enable tethering\n");
 		samsung_enable_function(USBSTATUS_VTP);
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+		mdelay(50);
+		if(a_dev->cdev)
+			if(a_dev->cdev->gadget)
+				usb_gadget_vbus_connect(a_dev->cdev->gadget);
+#endif
 	}
 	else {
 		printk("Disable tethering\n");

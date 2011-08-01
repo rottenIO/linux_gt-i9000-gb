@@ -1445,6 +1445,20 @@ static int ce147_regulator_init(void)
 
 static void ce147_init(void)
 {
+#if defined(CONFIG_LATIN_ARIES_TV) 
+		/* Set the I2C LINE FOR CAMERA */
+#if defined(CONFIG_LATIN_REV_06) // CYS_ 2010.06.08 for LATIN HW Rev06
+#else
+		/* Set the I2C LINE FOR CAMERA */
+		gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+		udelay(50);
+		gpio_direction_output(GPIO_ISDBT_PWR_EN,0); //set to output and low
+		mdelay(1);
+	
+		gpio_free(GPIO_ISDBT_PWR_EN);
+#endif
+#endif
+
 	/* CAM_IO_EN - GPB(7) */
 	if (gpio_request(GPIO_GPB7, "GPB7") < 0)
 		pr_err("failed gpio_request(GPB7) for camera control\n");
@@ -1758,6 +1772,20 @@ static int ce147_power_off(void)
 
 	mdelay(1);
 	
+#if defined(CONFIG_LATIN_ARIES_TV) 
+	/* Set the I2C LINE FOR CAMERA */
+#if defined(CONFIG_LATIN_REV_06)  // CYS_ 2010.06.08 for LATIN HW Rev06
+#else
+	/* Set the I2C LINE FOR CAMERA */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,1); //set to output and high
+	mdelay(1);
+
+	gpio_free(GPIO_ISDBT_PWR_EN);
+#endif 
+#endif
+	
 	gpio_free(GPIO_CAM_MEGA_EN);
 	gpio_free(GPIO_CAM_MEGA_nRST);
 	gpio_free(GPIO_CAM_VGA_nRST);
@@ -1920,6 +1948,19 @@ static bool s5ka3dfx_powered_on;
 static int s5ka3dfx_request_gpio(void)
 {
 	int err;
+
+#if defined(CONFIG_LATIN_ARIES_TV) 
+	/* Set the I2C LINE FOR CAMERA */
+#ifdef CONFIG_LATIN_REV_06  // CYS_ 2010.06.08 for LATIN HW Rev06
+#else
+	/* Set the I2C LINE FOR CAMERA */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,0); //set to output and low
+	mdelay(1);
+	gpio_free(GPIO_ISDBT_PWR_EN);
+#endif
+#endif
 
 	/* CAM_VGA_nSTBY - GPB(0) */
 	err = gpio_request(GPIO_CAM_VGA_nSTBY, "GPB0");
@@ -2129,6 +2170,21 @@ static int s5ka3dfx_power_off(void)
 		pr_err("Failed to disable regulator vga_avdd\n");
 		return -EINVAL;
 	}*/
+
+//Derek: fixed Second Camera I2C problem, 2010_08_24
+#if defined(CONFIG_LATIN_ARIES_TV) 
+	/* Set the I2C LINE FOR CAMERA */
+#if defined(CONFIG_LATIN_REV_06)  // CYS_ 2010.06.08 for LATIN HW Rev06
+#else
+	/* Set the I2C LINE FOR CAMERA */
+	gpio_request(GPIO_ISDBT_PWR_EN,"ISDBT_EN");
+	udelay(50);
+	gpio_direction_output(GPIO_ISDBT_PWR_EN,1); //set to output and high
+	mdelay(1);
+
+	gpio_free(GPIO_ISDBT_PWR_EN);
+#endif 
+#endif
 
 	gpio_free(GPIO_GPB7);
 	gpio_free(GPIO_CAM_VGA_nRST);
@@ -2355,12 +2411,24 @@ static void fsa9480_usb_cb(bool attached)
 {
 	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	if (gadget) {
+		if (attached)
+			usb_gadget_vbus_connect(gadget);
+		else
+		{
+			gadget->speed = USB_SPEED_HIGH;
+			usb_gadget_vbus_disconnect(gadget);
+	}
+	}
+#else
 	if (gadget) {
 		if (attached)
 			usb_gadget_vbus_connect(gadget);
 		else
 			usb_gadget_vbus_disconnect(gadget);
 	}
+#endif
 
 	mtp_off_status = false;
 
@@ -2539,6 +2607,15 @@ static struct i2c_board_info i2c_devs12[] __initdata = {
 	},
 };
 
+//Derek: Added a code the DTV I2C interface.
+#if defined(CONFIG_LATIN_ARIES_TV)  
+static struct i2c_board_info i2c_devs13[] __initdata = {
+	{
+		I2C_BOARD_INFO("fc8100", 0x77),
+	},
+};
+#endif 
+
 static struct resource ram_console_resource[] = {
 	{
 		.flags = IORESOURCE_MEM,
@@ -2642,12 +2719,25 @@ static void sec_switch_set_usb_gadget_vbus(bool en)
 {
 	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	if (gadget) {
+		if (en)
+			usb_gadget_vbus_connect(gadget);
+		else
+		{
+			gadget->speed = USB_SPEED_UNKNOWN;
+			usb_gadget_vbus_disconnect(gadget);
+	}
+}
+#else
 	if (gadget) {
 		if (en)
 			usb_gadget_vbus_connect(gadget);
 		else
 			usb_gadget_vbus_disconnect(gadget);
 	}
+#endif
+
 }
 
 static struct sec_switch_platform_data sec_switch_pdata = {
@@ -2948,10 +3038,51 @@ static void config_init_gpio(void)
 	config_gpio_table(ARRAY_SIZE(initial_gpio_table), initial_gpio_table);
 }
 
+
+//HS.yi: Define the LATIN Sleep GPIO:2010.08.17 // js0809.kim
+#if defined(CONFIG_LATIN_ARIES_B)  // sjinu added to support ISDB, 2010_06_22
+static unsigned int ISDB_ON_sleep_gpio_table[][3] = {
+    {GPIO_ISDBT_RST, S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_UP}, 	  
+    {GPIO_ISDBT_PWR_EN,  S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
+    {GPIO_I2C_SW,  S3C_GPIO_SLP_OUT1, S3C_GPIO_PULL_NONE}, 
+};
+
+static unsigned int ISDB_OFF_sleep_gpio_table[][3] = {
+    {GPIO_ISDBT_RST, S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_UP},
+    {GPIO_ISDBT_PWR_EN,  S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},   
+    {GPIO_I2C_SW,  S3C_GPIO_SLP_OUT0, S3C_GPIO_PULL_DOWN},    		
+};
+//s3c_config_sleep_gpio_table(ARRAY_SIZE(ISDB_ON_sleep_gpio_table),  ISDB_ON_sleep_gpio_table);
+#endif
+
 void config_sleep_gpio(void)
 {
+#if defined(CONFIG_LATIN_ARIES_B)  // sjinu added to support ISDB, 2010_06_22 //js0809.kim
+		//HS.yi: Define the LATIN Sleep GPIO:2010.08.17 
+		int ISDB_ON = gpio_get_value(GPIO_ISDBT_PWR_EN);
+		printk("ISDBT_PWR_EN  : %s\n", ISDB_ON? "High":"Low");
+	
+		if(ISDB_ON)
+		{
+			config_sleep_gpio_table(ARRAY_SIZE(ISDB_ON_sleep_gpio_table),
+							  ISDB_ON_sleep_gpio_table);		
+		}
+		else
+		{
+			config_sleep_gpio_table(ARRAY_SIZE(ISDB_OFF_sleep_gpio_table),
+							  ISDB_OFF_sleep_gpio_table);			
+		}
+#endif	
+
 	config_gpio_table(ARRAY_SIZE(sleep_alive_gpio_table), sleep_alive_gpio_table);
 	config_sleep_gpio_table(ARRAY_SIZE(sleep_gpio_table), sleep_gpio_table);
+
+// sjinu changed to debug FCI disable issue, 2010_06_22 // js0809.kim
+#if defined(CONFIG_LATIN_ARIES_L)
+		s3c_gpio_cfgpin(S5PV210_GPG3(0), S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(S5PV210_GPG3(0), S3C_GPIO_PULL_UP);
+		s3c_gpio_setpin(S5PV210_GPG3(0), 0);
+#endif
 
 	if (gpio_get_value(GPIO_PS_ON)) {
 		s3c_gpio_slp_setpull_updown(GPIO_ALS_SDA_28V, S3C_GPIO_PULL_NONE);
@@ -3303,6 +3434,10 @@ static struct platform_device *aries_devices[] __initdata = {
 	&s5p_device_rp,
 #endif
 	&sec_device_wifi,
+//Derek: added for DTV TSI interface:2010.07.29
+#if defined(CONFIG_VIDEO_TSI) || defined(CONFIG_LATIN_ARIES_TV)
+	&s3c_device_tsi,
+#endif	
 };
 
 
@@ -3458,7 +3593,10 @@ static void __init aries_machine_init(void)
 	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE2) << 2);
 	s3c_gpio_cfgpin(GPIO_HWREV_MODE3, S3C_GPIO_INPUT);
 	s3c_gpio_setpull(GPIO_HWREV_MODE3, S3C_GPIO_PULL_NONE);
-#if !defined(CONFIG_ARIES_NTT)
+#if defined(CONFIG_LATIN_ARIES_TV)  //Derek: Fixed the HWREV value for NC: 2010.07.28
+	HWREV=0xE;
+	printk("HWREV is 0x%x\n", HWREV);
+#elif !defined(CONFIG_ARIES_NTT)
 	HWREV = HWREV | (gpio_get_value(GPIO_HWREV_MODE3) << 3);
 	printk(KERN_INFO "HWREV is 0x%x\n", HWREV);
 #else
@@ -3514,6 +3652,10 @@ static void __init aries_machine_init(void)
 	i2c_register_board_info(12, i2c_devs12, ARRAY_SIZE(i2c_devs12));
 	/* nfc sensor */
 	i2c_register_board_info(14, i2c_devs14, ARRAY_SIZE(i2c_devs14));
+
+#if defined(CONFIG_LATIN_ARIES_TV)
+	i2c_register_board_info(0, i2c_devs13, ARRAY_SIZE(i2c_devs13));
+#endif
 
 #ifdef CONFIG_FB_S3C_TL2796
 	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));

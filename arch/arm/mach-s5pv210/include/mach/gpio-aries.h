@@ -1,6 +1,13 @@
 #ifndef __GPIO_ARIES_H_
 #define __GPIO_ARIES_H_
 
+//#include <mach/gpio.h>
+#if defined(CONFIG_LATIN_ARIES_TV)
+#ifndef CONFIG_LATIN_REV_06 // DerekJi: 2010.07.27 for LATIN HW Rev06
+#define CONFIG_LATIN_REV_06
+#endif
+#endif
+
 #define GPIO_LEVEL_LOW			0
 #define GPIO_LEVEL_HIGH			1
 #define GPIO_LEVEL_NONE			2
@@ -59,13 +66,21 @@
 
 #define GPIO_CAM_VGA_nRST		S5PV210_GPB(2)
 
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define GPIO_TOUCH_INT			S5PV210_GPB(3)
+#else
 #define GPIO_BT_nRST			S5PV210_GPB(3)
+#endif
 
 #define GPIO_BOOT_MODE			S5PV210_GPB(4)
 
 #define GPIO_WLAN_BT_EN			S5PV210_GPB(5)
 
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define GPIO_BT_nRST		S5PV210_GPB(6)
+#else
 #define GPIO_GPB6			S5PV210_GPB(6)
+#endif
 
 #define GPIO_GPB7			S5PV210_GPB(7)
 
@@ -119,11 +134,16 @@
 
 #define GPIO_GPD03			S5PV210_GPD0(3)
 
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define GPIO_ISDBT_SDA		    S5PV210_GPD1(0)
+#define GPIO_ISDBT_SCL		    S5PV210_GPD1(1)
+#else
 #define GPIO_CAM_SDA_29V		S5PV210_GPD1(0)
 #define GPIO_CAM_SDA_29V_AF		2
 
 #define GPIO_CAM_SCL_29V		S5PV210_GPD1(1)
 #define GPIO_CAM_SCL_29V_AF		2
+#endif
 
 #if defined(CONFIG_ARIES_NTT)
 #define GPIO_GPD12			S5PV210_GPD1(2)
@@ -336,6 +356,10 @@
 #define GPIO_GPG31			S5PV210_GPG3(1)
 
 #define GPIO_FLM_SEL			S5PV210_GPG3(2)
+#elif defined(CONFIG_LATIN_ARIES_TV)  //latin-feature (DTV) added
+#define GPIO_ISDBT_RST			S5PV210_GPG3(0)
+#define GPIO_GPS_PWR_EN		S5PV210_GPG3(1)
+#define GPIO_GPS_nRST			S5PV210_GPG3(2)
 #else
 #define GPIO_GPS_nRST			S5PV210_GPG3(0)
  
@@ -350,6 +374,10 @@
 
 #define GPIO_WLAN_WAKE			S5PV210_GPG3(5)
 #define GPIO_WLAN_WAKE_AF		1
+
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define GPIO_HWREV_MODE0		S5PV210_GPG3(6)
+#endif
 
 #define GPIO_AP_PS_HOLD			S5PV210_GPH0(0)
 
@@ -467,6 +495,19 @@
 #define GPIO_MSENSE_SCL_28V		S5PV210_GPJ0(0)
 #define GPIO_MSENSE_SDA_28V		S5PV210_GPJ0(1)
 
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define GPIO_ISDBT_CLK			S5PV210_GPJ0(2)
+
+#define GPIO_ISDBT_SYNC			S5PV210_GPJ0(3)
+
+#define GPIO_ISDBT_DTEN			S5PV210_GPJ0(4)
+
+#define GPIO_ISDBT_DATA			S5PV210_GPJ0(5)
+
+#define GPIO_ISDBT_PCKETERR		S5PV210_GPJ0(6)
+
+#define GPIO_CAM_MEGA_EN		S5PV210_GPJ0(7)
+#else
 #define GPIO_HWREV_MODE0		S5PV210_GPJ0(2)
 #define GPIO_HWREV_MODE1		S5PV210_GPJ0(3)
 #define GPIO_HWREV_MODE2		S5PV210_GPJ0(4)
@@ -476,6 +517,7 @@
 #define GPIO_CAM_MEGA_EN		S5PV210_GPJ0(6)
 
 #define GPIO_HWREV_MODE3		S5PV210_GPJ0(7)
+#endif
 
 #define GPIO_PHONE_ON			S5PV210_GPJ1(0)
 
@@ -503,13 +545,23 @@
 #define GPIO_SUB_MICBIAS_EN		S5PV210_GPJ2(5)
 
 #else
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define GPIO_HWREV_MODE1		S5PV210_GPJ2(0)
+
+#define GPIO_HWREV_MODE2		S5PV210_GPJ2(1)
+#else
 #define GPIO_FLASH_EN			S5PV210_GPJ2(0)
 
 #define GPIO_CAM_FLASH_EN_SET		S5PV210_GPJ2(1)
+#endif
 
 #define GPIO_OLED_DET			S5PV210_GPJ2(2)
 
+#if defined(CONFIG_LATIN_ARIES_TV)  //latin-feature (DTV) added
+#define GPIO_HWREV_MODE3		S5PV210_GPJ2(3)
+#else
 #define GPIO_CODEC_XTAL_EN		S5PV210_GPJ2(3)
+#endif
 
 #define GPIO_FM_INT			S5PV210_GPJ2(4)
 #define GPIO_FM_RST			S5PV210_GPJ2(5)
@@ -526,6 +578,8 @@
 
 #if defined(CONFIG_ARIES_NTT)
 #define GPIO_GPJ33			S5PV210_GPJ3(3)
+#elif defined(CONFIG_LATIN_ARIES_TV) && defined(CONFIG_LATIN_REV_06)  //latin-feature (DTV) added
+#define GPIO_ISDBT_PWR_EN				S5PV210_GPJ3(3)
 #else
 #define _3_GPIO_TOUCH_CE		S5PV210_GPJ3(3)
 #define _3_GPIO_TOUCH_ST_AF		1
@@ -548,6 +602,14 @@
 
 #if defined(CONFIG_GALAXY_I897)
 #define GPIO_EAR_MICBIAS_EN		S5PV210_GPJ4(4)
+#endif
+
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+  #if defined(CONFIG_LATIN_REV_06)
+  #define GPIO_I2C_SW			S5PV210_GPJ4(4)
+  #else
+  #define GPIO_ISDBT_PWR_EN		S5PV210_GPJ4(4)
+  #endif
 #endif
 
 #define GPIO_MP010			S5PV210_MP01(0)
@@ -640,8 +702,10 @@
 #define PMIC_I2C_SDA			S5PV210_GPJ4(0)
 #define PMIC_I2C_SCL			S5PV210_GPJ4(3)
 
+#if !defined(CONFIG_LATIN_ARIES_TV)  //hanson.jung 2010.08.16
 #define GPIO_TOUCH_INT			S5PV210_GPJ0(5)
 #define	GPIO_TOUCH_INT_AF		0xFF
+#endif
 
 #define	GPIO_TOUCH_RST			S5PV210_GPB(6)
 #define	GPIO_TOUCH_ST_AF		1
@@ -675,7 +739,11 @@
 #define	GPIO_N_POWER			S5PV210_GPH2(6)
 #define	GPIO_N_POWER_AF			2
 
+#if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
+#define	GPIO_BT_RST			S5PV210_GPB(6)
+#else
 #define	GPIO_BT_RST			S5PV210_GPB(3)
+#endif
 #define	GPIO_WLAN_RST			S5PV210_GPG1(2)
 
 #define GPIO_JACK_INT_N			S5PV210_GPH2(7)

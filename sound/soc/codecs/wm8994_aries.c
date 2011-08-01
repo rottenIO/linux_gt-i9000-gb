@@ -307,7 +307,11 @@ struct gain_info_t voicecall_gain_table[VOICECALL_GAIN_NUM] = {
 		.mode = VOICECALL_RCV,
 		.reg  = WM8994_LEFT_LINE_INPUT_1_2_VOLUME,	/* 18h */
 		.mask = WM8994_IN1L_VOL_MASK,
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL)	// js0809.kim@LTN : GB update for PGU noise issue
+		.gain = WM8994_IN1L_VU | 0x0E		/* +4.5dB */
+#else
 		.gain = WM8994_IN1L_VU | 0x16		/* +16.5dB */
+#endif
 	}, {
 		.mode = VOICECALL_RCV,
 		.reg  = WM8994_INPUT_MIXER_3,		/* 29h */
@@ -1155,8 +1159,14 @@ void wm8994_set_bluetooth_common_setting(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_GPIO_10, 0xA101);
 	wm8994_write(codec, WM8994_GPIO_11, 0xA101);
 
+
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // js0809.kim@LTN mute and robotic noise in BT transfer(ony GB) sjinu changed, 2010_08_24 (wolfson young Kim)
+	wm8994_write(codec, WM8994_FLL2_CONTROL_2, 0x0700);
+	wm8994_write(codec, WM8994_FLL2_CONTROL_3, 0x3127);
+#else
 	wm8994_write(codec, WM8994_FLL2_CONTROL_2, 0x0700);
 	wm8994_write(codec, WM8994_FLL2_CONTROL_3, 0x3126);
+#endif
 	wm8994_write(codec, WM8994_FLL2_CONTROL_4, 0x0100);
 	wm8994_write(codec, WM8994_FLL2_CONTROL_5, 0x0C88);
 	wm8994_write(codec, WM8994_FLL2_CONTROL_1,
@@ -1188,10 +1198,15 @@ void wm8994_set_bluetooth_common_setting(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_5, val);
 
 	/* Clocking */
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // js0809.kim@LTN mute and robotic noise in BT transfer(ony GB) sjinu changed, 2010_08_24 (wolfson young Kim)
+	val = wm8994_read(codec, WM8994_CLOCKING_1);
+	val |= (WM8994_DSP_FS2CLK_ENA);
+	wm8994_write(codec, WM8994_CLOCKING_1, val);
+#else
 	val = wm8994_read(codec, WM8994_CLOCKING_1);
 	val |= (WM8994_DSP_FS2CLK_ENA | WM8994_SYSCLK_SRC);
 	wm8994_write(codec, WM8994_CLOCKING_1, val);
-
+#endif
 	/* AIF1 & AIF2 Output is connected to DAC1 */
 	val = wm8994_read(codec, WM8994_DAC1_LEFT_MIXER_ROUTING);
 	val &= ~(WM8994_AIF1DAC1L_TO_DAC1L_MASK |
@@ -2214,8 +2229,20 @@ void wm8994_set_voicecall_common(struct snd_soc_codec *codec)
 	wm8994_write(codec, WM8994_GPIO_10, 0xA101);
 	wm8994_write(codec, WM8994_GPIO_11, 0xA101);
 
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // sjinu changed, 2010_08_24 (wolfson young Kim)
+	wm8994_write(codec, WM8994_ROBOTICS_REG1, 0x0003);
+	wm8994_write(codec, WM8994_ROBOTICS_REG2, 0x0000);
+	wm8994_write(codec, WM8994_ROBOTICS_REG1, 0x0003);
+#endif
+
+		/*FLL2 Setting*/
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // js0809.kim@LTN mute and robotic noise in BT transfer(ony GB) sjinu changed, 2010_08_24 (wolfson young Kim)
+	wm8994_write(codec, WM8994_FLL2_CONTROL_2, 0x0700);
+	wm8994_write(codec, WM8994_FLL2_CONTROL_3, 0x3127);
+#else
 	wm8994_write(codec, WM8994_FLL2_CONTROL_2, 0x2F00);
 	wm8994_write(codec, WM8994_FLL2_CONTROL_3, 0x3126);
+#endif
 	wm8994_write(codec, WM8994_FLL2_CONTROL_4, 0x0100);
 	wm8994_write(codec, WM8994_FLL2_CONTROL_5, 0x0C88);
 	wm8994_write(codec, WM8994_FLL2_CONTROL_1,
@@ -2225,7 +2252,11 @@ void wm8994_set_voicecall_common(struct snd_soc_codec *codec)
 	if (!(val & WM8994_AIF2CLK_ENA))
 		wm8994_write(codec, WM8994_AIF2_CLOCKING_1, 0x0018);
 
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // sjinu changed, 2010_08_24 (wolfson young Kim)
+	wm8994_write(codec, WM8994_AIF2_RATE, 0x9 << WM8994_AIF2CLK_RATE_SHIFT);
+#else
 	wm8994_write(codec, WM8994_AIF2_RATE, 0x3 << WM8994_AIF2CLK_RATE_SHIFT);
+#endif
 
 	/* AIF2 Interface - PCM Stereo mode */
 	/* Left Justified, BCLK invert, LRCLK Invert */
@@ -2249,6 +2280,11 @@ void wm8994_set_voicecall_common(struct snd_soc_codec *codec)
 	/* Clocking */
 	val = wm8994_read(codec, WM8994_CLOCKING_1);
 	val |= (WM8994_DSP_FS2CLK_ENA);
+
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) // sjinu changed, 2010_08_24 (wolfson young Kim)
+		val |= (WM8994_SYSCLK_SRC);
+#endif
+	
 	wm8994_write(codec, WM8994_CLOCKING_1, val);
 
 	wm8994_write(codec, WM8994_POWER_MANAGEMENT_6, 0x0);
@@ -2360,6 +2396,18 @@ void wm8994_set_voicecall_receiver(struct snd_soc_codec *codec)
 
 	wm8994_write(codec, WM8994_AIF1_DAC1_FILTERS_1, 0x0000);
 	wm8994_write(codec, WM8994_AIF2_DAC_FILTERS_1, 0x0000);
+
+#if defined(CONFIG_LATIN_UPDATE_GAINCTRL) //latin_mm: 01Jung 10.08.30 problem of static noise
+/* PGU robotic sound issue at unpaved road
+   fix: Voice Mode 3(fc=267Hz at fs=8kHz)
+        AIF2ADC output path(Left) Digital HPF -> enabled
+        AIF2ADC output path(Right) Digital HPF -> enabled        
+*/
+	val = 0x7800; 
+	wm8994_write(codec,WM8994_AIF2_ADC_FILTERS,val);
+	DEBUG_LOG("reg 510h = %x\n", val);
+#endif
+
 
 }
 

@@ -85,6 +85,9 @@ struct s5ka3dfx_state {
 	int vt_mode;		/*For VT camera */
 	int check_dataline;
 	int check_previewdata;
+	// latin_cam : VT Cam Anti-banding
+	int anti_banding;
+	// hmin84.park 100817
 };
 
 enum {
@@ -214,6 +217,13 @@ static struct s5ka3dfx_regset_table frame_size[] = {
 	S5KA3DFX_REGSET_TABLE_ELEMENT(0, s5ka3dfx_QCIF),
 	S5KA3DFX_REGSET_TABLE_ELEMENT(1, s5ka3dfx_Return_VGA),
 };
+
+// latin_cam : VT Cam Anti-banding
+static struct s5ka3dfx_regset_table anti_banding_60Hz[] = {
+	S5KA3DFX_REGSET_TABLE_ELEMENT(0, s5ka3dfx_anti_banding_60Hz),
+};
+// sec_zerokul 2011.3.18 
+
 static int s5ka3dfx_reset(struct v4l2_subdev *sd)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -1042,6 +1052,13 @@ static int s5ka3dfx_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		err = s5ka3dfx_reset(sd);
 		break;
 
+	// latin_cam : VT Cam Anti-banding
+	case V4L2_CID_CAMERA_ANTI_BANDING:
+		state->anti_banding= ctrl->value;
+		err = 0;		
+		break;	
+	// hmin84.park 100817
+
 	default:
 		dev_dbg(&client->dev, "%s: no support control "
 				"in camera sensor, S5KA3DFX\n", __func__);
@@ -1091,6 +1108,20 @@ static int s5ka3dfx_init(struct v4l2_subdev *sd, u32 val)
 			err = s5ka3dfx_write_regset_table(sd, init_reg);
 	} else
 		err = s5ka3dfx_write_regset_table(sd, init_vt_reg);
+
+	// latin_cam : VT Cam Anti-banding  
+	printk(KERN_DEBUG " AntiBanding : %d \n",state->anti_banding); 		
+	if(state->anti_banding == ANTI_BANDING_60HZ)
+	{
+		err = s5ka3dfx_write_regset_table(sd, anti_banding_60Hz);
+		if (err < 0) 
+		{
+			v4l_err(client, "%s: s5ka3dfx_set_anti_banding  err(%d)\n", __func__, state->anti_banding);
+			return -EIO;	/* FIXME */	
+		}
+	}
+	// sec_zerokul 2011.3.18 
+
 
 	if (err < 0) {
 		/* This is preview fail */

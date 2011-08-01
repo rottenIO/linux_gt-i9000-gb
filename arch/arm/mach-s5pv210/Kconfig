@@ -230,4 +230,24 @@ config CPU_DIDLE
 	depends on CPU_IDLE
 	default y
 
+# Configuration options for latin S1
+config LATIN_ARIES_TV
+        bool "select Latin S1 TV"
+        default n
+
+config LATIN_ARIES_B
+        bool "select Latin S1 B"
+        default n
+
+config LATIN_ARIES_L
+        bool "select Latin S1 L"
+        default n
+
+config LATIN_ARIES_T
+        bool "select Latin S1 T"
+        default n
+
+config LATIN_ARIES_E
+        bool "select Latin S1 E"
+        default n
 endif

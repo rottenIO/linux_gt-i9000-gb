@@ -531,6 +531,28 @@ static void nuke(struct s3c_ep *ep, int status)
 static void stop_activity(struct s3c_udc *dev,
 			  struct usb_gadget_driver *driver)
 {
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	int i, notify = 1;
+
+	/* don't disconnect drivers more than once */
+	if (dev->gadget.speed == USB_SPEED_UNKNOWN) {
+		notify = 0;	
+	}	
+	dev->gadget.speed = USB_SPEED_UNKNOWN;
+
+	/* prevent new request submissions, kill any outstanding requests  */
+	for (i = 0; i < S3C_MAX_ENDPOINTS; i++) {
+		struct s3c_ep *ep = &dev->ep[i];
+		ep->stopped = 1;
+		nuke(ep, -ESHUTDOWN);
+	}
+
+	if (notify) {
+		spin_unlock(&dev->lock);
+		driver->disconnect(&dev->gadget);
+		spin_lock(&dev->lock);
+	}
+#else
 	int i;
 
 	/* don't disconnect drivers more than once */
@@ -551,7 +573,7 @@ static void stop_activity(struct s3c_udc *dev,
 		driver->disconnect(&dev->gadget);
 		spin_lock(&dev->lock);
 	}
-
+#endif
 	/* re-init driver-visible data structures */
 	udc_reinit(dev);
 }

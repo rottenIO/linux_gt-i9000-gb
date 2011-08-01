@@ -353,6 +353,7 @@ struct ce147_state {
 #endif
 	int exif_ctrl;
 	int thumb_null;
+	int exif_modelname; //latin_cam : support exif model name, hmin84.park 100817
 };
 
 static int condition;
@@ -1604,10 +1605,62 @@ static int ce147_set_anti_banding(struct v4l2_subdev *sd)
 		return -EIO;
 	}
 
+	dev_err(&client->dev, "Anti-Banding = %d\n", state->anti_banding);	//latin_cam : support anti banding, hmin84.park 100817
 	ce147_msg(&client->dev, "%s: done\n", __func__);
 
 	return 0;
 }
+
+//latin_cam: jyc_support exif model name
+static int ce147_set_exif_model_name(struct v4l2_subdev *sd)
+{
+	int err;
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ce147_state *state = to_state(sd);
+
+	unsigned char ce147_model_name[130] = {0x00,};
+	unsigned int ce147_reglen_model = 130;	
+	unsigned char *ce147_str_model = NULL;
+
+	switch(state->exif_modelname)
+	{
+		case 0 :
+			ce147_str_model = "GT-I9000";
+			break;
+
+		case 1 :
+			ce147_str_model = "GT-I9000B";
+			break;
+
+		case 2 :
+			ce147_str_model = "GT-I9000L";
+			break;
+
+		case 3 :
+			ce147_str_model = "GT-I9000T";
+			break;
+
+		default :
+			ce147_str_model = "GT-I9000";			
+			break;
+	}
+	
+	ce147_model_name[0] = 0x06;
+	ce147_model_name[1] = strlen(ce147_str_model);
+
+	memcpy(ce147_model_name+2, ce147_str_model, strlen(ce147_str_model));	
+
+	err = ce147_i2c_write_multi(client, CMD_INFO_MODEL, ce147_model_name, ce147_reglen_model);
+	if(err < 0){
+		dev_err(&client->dev, "%s: failed: i2c_write for exif model name\n", __func__);
+		return -EIO;
+	}
+		
+	ce147_msg(&client->dev, "%s: done\n", __func__);
+
+	return 0;
+}
+//hmin84.park 100817
 
 static int ce147_set_preview_stop(struct v4l2_subdev *sd)
 {
@@ -2558,6 +2611,18 @@ static int ce147_set_capture_start(struct v4l2_subdev *sd,
 			return -EIO;
 		}
 
+		//latin_cam : jyc_support exif model name
+		/*
+		 * 4-1. Set EXIF information(Model Name)
+		 */
+		err = ce147_set_exif_model_name(sd);
+		if(err < 0){
+			dev_err(&client->dev, "%s: failed: i2c_write for exif - Model Name\n", __func__);
+			return -EIO;
+		}
+		//hmin84.park 100817
+
+		
 		/*
 		 * 6. Set JPEG Encoding parameters
 		 */
@@ -5058,6 +5123,13 @@ static int ce147_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		state->anti_banding = ctrl->value;
 		err = 0;
 		break;
+
+	//latin_cam : jyc_support exif model name
+	case V4L2_CID_CAMERA_EXIF_MODELNAME:
+		state->exif_modelname = ctrl->value;
+		err = 0;				
+		break;	
+	//hmin84.park 100817
 
 	case V4L2_CID_CAMERA_SET_GAMMA:
 		state->hd_gamma = ctrl->value;

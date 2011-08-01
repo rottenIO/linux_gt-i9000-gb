@@ -250,4 +250,10 @@ extern int s3c_gpio_set_slewrate(unsigned int pin, unsigned int config);
 extern int s3c_gpio_slp_setpull_updown(unsigned int pin, s3c_gpio_pull_t pull);
 extern int s5pv210_gpiolib_init(void);
 
+
+#ifdef CONFIG_MACH_ARIES
+#include "gpio-aries.h"
+#endif	
+
+
 #endif /* __ASM_ARCH_GPIO_H */

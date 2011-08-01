@@ -477,6 +477,7 @@ enum v4l2_slow_ae_mode {
 #define V4L2_CID_CAMERA_THUMBNAIL_NULL          (V4L2_CID_PRIVATE_BASE + 119)
 #define V4L2_CID_CAMERA_LENS_SOFTLANDING          (V4L2_CID_PRIVATE_BASE + 120)
 
+#define V4L2_CID_CAMERA_EXIF_MODELNAME		(V4L2_CID_PRIVATE_BASE+121)	//latin_cam: support exif model name, hmin84.park 100817
 
 /* Pixel format FOURCC depth Description */
 /* 12  Y/CbCr 4:2:0 64x32 macroblocks */

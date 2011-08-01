@@ -531,6 +531,63 @@ static int s3c24xx_i2c_doxfer(struct s3c24xx_i2c *i2c,
 	return ret;
 }
 
+#include <mach/gpio.h>
+#if defined(CONFIG_LATIN_ARIES_B) && defined(CONFIG_LATIN_REV_06)
+static inline int is_tv(struct i2c_msg *msgs)
+{
+	return ((u16)0x77 == msgs->addr);
+}
+
+static inline int is_camera(struct i2c_msg *msgs)
+{
+	return ( ((u16)0x3c == msgs->addr)		//primary cam
+			|| ((u16)0x62 == msgs->addr) );	//secondary cam
+}
+
+static inline int is_device_changed(struct i2c_msg *msgs)
+{
+	static u16 old_addr = 0x0;
+
+	if (old_addr != msgs->addr) {
+		old_addr = msgs->addr;
+		return 1;
+	}
+	else
+		return 0;
+}
+
+static inline void set_i2c_switch(struct i2c_adapter *adap,
+			struct i2c_msg *msgs)
+{
+	struct s3c24xx_i2c *i2c = (struct s3c24xx_i2c *)adap->algo_data;
+	int err;
+
+	 
+	
+	if (!is_tv(msgs) && !is_camera(msgs))
+		return;
+
+	if (is_device_changed(msgs)) {
+		err = gpio_request(GPIO_I2C_SW, "I2C_SW");
+		if (err)
+			dev_err(i2c->dev, "%s, %s : gpio_request() failed\n",
+					__FILE__, __FUNCTION__);
+
+		if (is_camera(msgs)) {
+			printk("%s : camera\n", __FUNCTION__);
+			gpio_direction_output(GPIO_I2C_SW, 0);	//set to output and low
+		}
+		else if (is_tv(msgs)) {
+			printk("%s : tv\n", __FUNCTION__);
+			gpio_direction_output(GPIO_I2C_SW, 1);	//set to output and high
+		}
+
+		gpio_free(GPIO_I2C_SW);
+	}
+
+}
+#endif	//defined(CONFIG_LATIN_ARIES_B) && defined(CONFIG_LATIN_REV_06)
+
 /* s3c24xx_i2c_xfer
  *
  * first port of call from the i2c bus code when an message needs
@@ -543,6 +600,13 @@ static int s3c24xx_i2c_xfer(struct i2c_adapter *adap,
 	struct s3c24xx_i2c *i2c = (struct s3c24xx_i2c *)adap->algo_data;
 	int retry;
 	int ret;
+
+#if defined(CONFIG_LATIN_ARIES_B) && defined(CONFIG_LATIN_REV_06)
+	/* latin_cam:namkh 2010.06.18,
+	 * i2c switching setting for camera and TV */
+
+	set_i2c_switch(adap, msgs);
+#endif
 
 	clk_enable(i2c->clk);
 

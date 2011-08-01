@@ -1388,12 +1388,29 @@ composite_switch_work(struct work_struct *data)
 		container_of(data, struct usb_composite_dev, switch_work);
 	struct usb_configuration *config = cdev->config;
 
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	int state = 0;
+	printk("[composite_switch_work]config=0x%p\n",(void*)config);
+
+	if (config) {
+		INFO(cdev, "usb switch_work: config = %d\n", config->bConfigurationValue);
+		state = config->bConfigurationValue;
+
+	}
+	INFO(cdev, "usb uevent : old = %d, new = %d, %s\n", cdev->sdev.state, state,
+			cdev->sdev.state == state ? "No event" :
+			cdev->sdev.state > state ? "Disconnect": "Connect");
+
+	switch_set_state(&cdev->sdev, state);
+
+#else
 	printk("[composite_switch_work]config=0x%p\n",(void*)config);
 
 	if (config)
 		switch_set_state(&cdev->sdev, config->bConfigurationValue);
 	else
 		switch_set_state(&cdev->sdev, 0);
+#endif
 }
 
 static int composite_bind(struct usb_gadget *gadget)

@@ -570,6 +570,15 @@ static struct clk init_clocks_disable[] = {
 		.enable		= s5pv210_clk_ip4_ctrl,
 		.ctrlbit	= (1 << 3),
 	},
+#if defined(CONFIG_VIDEO_TSI) || defined(CONFIG_LATIN_ARIES_TV)
+	{
+		.name		= "tsi",
+		.id		= -1,
+		.parent 	= &clk_pclk_psys.clk,	
+		.enable		= s5pv210_clk_ip2_ctrl,
+		.ctrlbit	= S5P_CLKGATE_IP2_TSI,
+	}, 
+#endif
 };
 
 static struct clk init_dmaclocks[] = {

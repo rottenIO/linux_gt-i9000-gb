@@ -6,12 +6,15 @@ if ! [ -e .config ]; then
  make $1
 fi
 
-export KBUILD_BUILD_VERSION="0.4.3-talon-dev"
+export KBUILD_BUILD_VERSION="0.4.3-talonB-dev-b2"
 
 #export LOCALVERSION="-I9000XWJVB-CL118186"
 #export LOCALVERSION="-I9000XWJVH-CL184813"
 #export LOCALVERSION="-I9000XXJVP-CL264642"
-export LOCALVERSION="-I9000XXJVQ-CL281085"
+#export LOCALVERSION="-I9000XXJVQ-CL281085"
+#latin modules version
+export LOCALVERSION="-I9000BVJJV3-CL262510"
+
 
 export INSTALL_MOD_PATH=./mod_inst
 make modules -j`grep 'processor' /proc/cpuinfo | wc -l`
@@ -33,7 +36,11 @@ unzip ./usr/prebuilt_ko.zip -d ./usr/initrd_files/lib/modules/
 make -j`grep 'processor' /proc/cpuinfo | wc -l`
 cp arch/arm/boot/zImage releasetools
 cd releasetools
-rm -f *.zip
-zip -r Talon *
+rm -f *.zip *.md5
+zip -r Talon-`echo $KBUILD_BUILD_VERSION`.zip *
+#build odin/heimdall release
+tar -H ustar -c zImage > Talon-`echo $KBUILD_BUILD_VERSION`.tar
+md5sum -t Talon-`echo $KBUILD_BUILD_VERSION`.tar >> Talon-`echo $KBUILD_BUILD_VERSION`.tar
+mv Talon-`echo $KBUILD_BUILD_VERSION`.tar Talon-`echo $KBUILD_BUILD_VERSION`.tar.md5
 cd ..
 echo "Finished."

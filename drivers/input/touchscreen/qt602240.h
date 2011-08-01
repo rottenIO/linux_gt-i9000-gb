@@ -4635,7 +4635,11 @@ uint8_t QT_Boot(void);
 #define QT602240_I2C_BOOT_ADDR  0x24
 
 
+#if defined(CONFIG_LATIN_ARIES_TV)  //Derek: Modify the Touch interrupt pin for LATIN Board:2010.07.28
+#define IRQ_TOUCH_INT  (IRQ_EINT_GROUP3_BASE+3)	// B3
+#else
 #define IRQ_TOUCH_INT (IRQ_EINT_GROUP18_BASE+5) /* J0_5 */
+#endif
 
 #undef QT602240_DEBUG
 
