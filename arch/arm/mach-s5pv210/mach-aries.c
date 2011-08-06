@@ -421,10 +421,6 @@ static struct regulator_consumer_supply ldo3_consumer[] = {
 	REGULATOR_SUPPLY("usb_io", NULL),
 };
 
-static struct regulator_consumer_supply ldo4_consumer[] = {
-	REGULATOR_SUPPLY("v_adc", NULL),
-};
-
 static struct regulator_consumer_supply ldo5_consumer[] = {
 	REGULATOR_SUPPLY("vtf", NULL),
 };
@@ -474,10 +470,6 @@ static struct regulator_consumer_supply buck2_consumer[] = {
 	REGULATOR_SUPPLY("vddint", NULL),
 };
 
-static struct regulator_consumer_supply buck3_consumer[] = {
-	REGULATOR_SUPPLY("vdd_ram", NULL),
-};
-
 static struct regulator_consumer_supply buck4_consumer[] = {
 	REGULATOR_SUPPLY("cam_isp_core", NULL),
 };
@@ -513,20 +505,15 @@ static struct regulator_init_data aries_ldo3_data = {
 static struct regulator_init_data aries_ldo4_data = {
 	.constraints	= {
 		.name		= "VADC_3.3V",
-		.min_uV		= 3000000, //3300000
-		.max_uV		= 3000000, //3300000
+		.min_uV		= 3300000,
+		.max_uV		= 3300000,
 		.apply_uV	= 1,
 		.always_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
-				  REGULATOR_CHANGE_STATUS,
-		.state_mem      = {
-			.uV     = 3000000,
-			.mode   = REGULATOR_MODE_NORMAL,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
+		.state_mem	= {
 			.disabled = 1,
 		},
 	},
-        .num_consumer_supplies  = ARRAY_SIZE(ldo4_consumer),
-        .consumer_supplies      = ldo4_consumer,
 };
 
 static struct regulator_init_data aries_ldo5_data = {
@@ -678,15 +665,12 @@ static struct regulator_init_data aries_ldo16_data = {
 static struct regulator_init_data aries_ldo17_data = {
 	.constraints	= {
 		.name		= "VCC_3.0V_LCD",
-		.min_uV		= 2600000, //3000000
-		.max_uV		= 2600000, //3000000
+		.min_uV		= 3000000,
+		.max_uV		= 3000000,
 		.apply_uV	= 1,
 		.always_on	= 0,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
-				  REGULATOR_CHANGE_STATUS,
+		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-                        .uV     = 2600000,
-                        .mode   = REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
 	},
@@ -733,20 +717,11 @@ static struct regulator_init_data aries_buck2_data = {
 static struct regulator_init_data aries_buck3_data = {
 	.constraints	= {
 		.name		= "VCC_1.8V",
-		.min_uV		= 1600000, //1800000
-		.max_uV		= 1600000, //1800000
+		.min_uV		= 1800000,
+		.max_uV		= 1800000,
 		.apply_uV	= 1,
 		.always_on	= 1,
-		.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE |
-		                  REGULATOR_CHANGE_STATUS,
-		.state_mem      = {
-                        .uV     = 1600000,
-			.mode   = REGULATOR_MODE_NORMAL,
-			.disabled = 1,
-                },
 	},
-        .num_consumer_supplies  = ARRAY_SIZE(buck3_consumer),
-        .consumer_supplies      = buck3_consumer,
 };
 
 static struct regulator_init_data aries_buck4_data = {
@@ -2407,22 +2382,34 @@ static struct i2c_board_info i2c_devs8[] __initdata = {
 static int fsa9480_init_flag = 0;
 static bool mtp_off_status;
 
+
+
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+extern u16 askonstatus;
+void fsa9480_usb_cb(bool attached)
+#else
 static void fsa9480_usb_cb(bool attached)
+#endif
 {
 	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
-#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+	if ((gadget) && (askonstatus != 0xabcd)) {
+#else
 	if (gadget) {
+#endif
+//lat
+#if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
 		if (attached)
 			usb_gadget_vbus_connect(gadget);
 		else
 		{
 			gadget->speed = USB_SPEED_HIGH;
 			usb_gadget_vbus_disconnect(gadget);
-	}
-	}
+		}
+		}
 #else
-	if (gadget) {
+
 		if (attached)
 			usb_gadget_vbus_connect(gadget);
 		else
@@ -2559,7 +2546,11 @@ static void max17040_power_supply_unregister(struct power_supply *psy)
 static struct max17040_platform_data max17040_pdata = {
 	.power_supply_register = max17040_power_supply_register,
 	.power_supply_unregister = max17040_power_supply_unregister,
+#if defined(CONFIG_ARIES_NTT)
+	.rcomp_value = 0xC000,
+#else
 	.rcomp_value = 0xB000,
+#endif
 };
 
 static struct i2c_board_info i2c_devs9[] __initdata = {

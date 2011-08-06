@@ -58,10 +58,16 @@ struct max17040_chip {
 	int status;
 };
 
+#if defined(CONFIG_ARIES_NTT)
+unsigned int prevFGSOC = 0;
+unsigned int fg_zero_count = 0;
+#endif
+
 extern struct class *sec_class;
 struct i2c_client *fg_i2c_client;
 
 static void max17040_update_values(struct max17040_chip *chip);
+static void max17043_set_threshold(struct i2c_client *client, int mode);
 
 static int max17040_get_property(struct power_supply *psy,
 			    enum power_supply_property psp,
@@ -143,6 +149,67 @@ static void max17040_get_soc(struct i2c_client *client)
 
 	pure_soc = msb * 100 + (lsb * 100) / 256;
 
+#if defined(CONFIG_ARIES_NTT)
+
+#if 1 /* test7, DF06, change the rcomp to C0 */
+	if(pure_soc >= 60)
+	{
+		if(pure_soc >= 460)
+		{
+			adj_soc = (pure_soc - 460)*8650/8740 + 1350;
+		}
+		else
+		{
+			adj_soc = (pure_soc - 60)*1350/400;
+		}
+
+		if(adj_soc < 100)
+			adj_soc = 100; //1%
+	}
+	else
+	{
+		adj_soc = 0; //0%
+	}
+#endif
+
+	// rounding off and Changing to percentage.
+	soc=adj_soc/100;
+
+	if(adj_soc%100 >= 50 )
+	{
+		soc+=1;
+	}
+
+	if(soc>=100)
+	{
+		soc=100;
+	}
+
+	/* we judge real 0% after 3 continuous counting */
+	if(soc == 0)
+	{
+		fg_zero_count++;
+
+		if(fg_zero_count >= 3)
+		{
+			soc = 0;
+			fg_zero_count = 0;
+		}
+		else
+		{
+			soc = prevFGSOC;
+		}
+	}
+	else
+	{
+		fg_zero_count=0;
+	}
+
+	prevFGSOC = soc;
+	chip->soc = soc;
+
+#else // CONFIG_ARIES_NTT
+
 	if (pure_soc >= 100)
 		adj_soc = pure_soc;
 	else if (pure_soc >= 70)
@@ -158,6 +225,8 @@ static void max17040_get_soc(struct i2c_client *client)
 		soc = ((adj_soc - 7600) * 8 / 10 + 50) / 100 + 81;
 
 	chip->soc = min(soc, (uint)100);
+
+#endif
 }
 
 static void max17040_get_version(struct i2c_client *client)
@@ -217,6 +286,9 @@ static int max17040_reset_chip(struct i2c_client *client)
 
 static void max17040_update_values(struct max17040_chip *chip)
 {
+      int i;
+      int value;
+	  
 	max17040_get_vcell(chip->client);
 	max17040_get_soc(chip->client);
 	max17040_get_online(chip->client);
@@ -280,7 +352,7 @@ static int __devinit max17040_probe(struct i2c_client *client,
 	if (!chip)
 		return -ENOMEM;
 
-	chip->client = fg_i2c_client = client;
+	chip->client = client;
 	chip->pdata = client->dev.platform_data;
 
 	i2c_set_clientdata(client, chip);
@@ -290,9 +362,7 @@ static int __devinit max17040_probe(struct i2c_client *client,
 	chip->battery.get_property	= max17040_get_property;
 	chip->battery.properties	= max17040_battery_props;
 	chip->battery.num_properties	= ARRAY_SIZE(max17040_battery_props);
-
-	max17040_update_values(chip);
-
+	
 	if (chip->pdata && chip->pdata->power_supply_register)
 		ret = chip->pdata->power_supply_register(&client->dev, &chip->battery);
 	else
@@ -302,11 +372,44 @@ static int __devinit max17040_probe(struct i2c_client *client,
 		goto err_psy_register;
 	}
 
+	if (chip->pdata)
+	{
+		i2c_smbus_write_word_data(client, MAX17040_RCOMP_MSB,   swab16(chip->pdata->rcomp_value));	
+	}
+   
+   
+
+#if defined (ATT_TMO_COMMON)
+       fg_i2c_client = client;
+       fg_chip = chip;
+	   
+	rcomp_status = -1;
+	max17040_low_battery = 0;
+       max17040_lowbat_warning = 0;
+	   
+	max17040_update_values(chip);
 	max17040_get_version(client);
 
-	if (chip->pdata)
-		i2c_smbus_write_word_data(client, MAX17040_RCOMP_MSB,
-					  swab16(chip->pdata->rcomp_value));
+	INIT_WORK(&low_bat_work, s3c_low_bat_work);	
+       wake_lock_init(&low_battery_wake_lock, WAKE_LOCK_SUSPEND, "low_battery_wake_lock");
+       	
+//	ret = request_threaded_irq(  client->irq  , NULL, low_battery_isr,
+//							   IRQF_TRIGGER_FALLING, "fuel gauge low battery irq", (void *) client);
+
+	set_irq_type(LOW_BATTERY_IRQ, IRQ_TYPE_EDGE_FALLING);
+	ret = request_irq(LOW_BATTERY_IRQ, low_battery_isr, IRQF_SAMPLE_RANDOM, "low battery irq", (void *) client);
+
+	if (ret) {
+					dev_err(&client->dev,"%s : Failed to request pmic irq\n", __func__);
+					goto err_fg_atcmd;	
+		 	}
+
+	ret = enable_irq_wake(client->irq);
+	if (ret) {
+					dev_err(&client->dev, "%s : Failed to enable pmic irq wake\n", __func__);
+					goto err_irq;
+	          }
+#endif
 
 	chip->fg_atcmd = device_create(sec_class, NULL, MKDEV(MAX17040_MAJOR, 0),
 					NULL, "fg_atcom_test");
