@@ -53,21 +53,7 @@ static DEFINE_MUTEX(set_freq_lock);
 
 /* frequency */
 static struct cpufreq_frequency_table freq_table[] = {
-#ifdef CONFIG_CPU_UV
-        {L0, 1000*1000},
-#endif
-#ifdef CONFIG_CPU_1200
-        {L0, 1200*1000},
-#endif
-#ifdef CONFIG_CPU_1300
-        {L0, 1300*1000},
-#endif
-#ifdef CONFIG_CPU_1400
-	{L0, 1400*1000},
-#endif
-#ifdef CONFIG_CPU_1440
-        {L0, 1440*1000},
-#endif
+        {L0, FREQMAX*1000},
         {L1, 800*1000},
         {L2, 400*1000},
         {L3, 200*1000},
@@ -77,8 +63,7 @@ static struct cpufreq_frequency_table freq_table[] = {
 
 extern int exp_UV_mV[5];
 unsigned int freq_uv_table[5][3] = {
-
-	//frequency, stock voltage, current voltage
+//frequency, stock voltage, current voltage
 #ifdef CONFIG_CPU_UV
 	{1000000, 1275, 1275},
 #endif
@@ -97,7 +82,7 @@ unsigned int freq_uv_table[5][3] = {
 	{800000, 1200, 1200},
 	{400000, 1050, 1050},
 	{200000, 950, 950},
-	{100000, 950, 950}
+	{100000, 950, 950},
 }; 
 
 #if defined(CONFIG_GPU_OC)
@@ -158,21 +143,8 @@ static u32 clkdiv_val[5][11] = {
 #ifdef CONFIG_CPU_UV
 	/* L0 : [1000/200/200/100][166/83][133/66][200/200] */
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
-#endif
-#ifdef CONFIG_CPU_1200
-	/* L0 : [1200/200/200/100][166/83][133/66][200/200] */
-	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
-#endif
-#ifdef CONFIG_CPU_1300
-	// L0: 1300
-	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
-#endif
-#ifdef CONFIG_CPU_1400
-	// L0: 1400
-	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
-#endif
-#ifdef CONFIG_CPU_1440
-	// L0: 1440
+#else
+	// L0 :
 	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 #endif
 	/* L1 : [800/200/200/100][166/83][133/66][200/200] */
@@ -555,6 +527,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		exp_UV_mV[index] = -50;
 
 	arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index]*1000));
+	freq_uv_table[index][2] =(int) arm_volt / 1000;
 	int_volt = dvs_conf[index].int_volt;
 
 	/* New clock information update */
@@ -714,7 +687,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 	} while (reg & 0xff);
 
 	/* ARM MCS value changed */
-	if (index > L3) {
+	if (index > L2) {
 		reg = __raw_readl(S5P_ARM_MCS_CON);
 		reg &= ~0x3;
 		reg |= 0x3;
@@ -783,6 +756,7 @@ static int s5pv210_cpufreq_target(struct cpufreq_policy *policy,
 		exp_UV_mV[index] = -50;
 
 	previous_arm_volt = (dvs_conf[index].arm_volt - (exp_UV_mV[index]*1000));
+	freq_uv_table[index][2] = (int) previous_arm_volt / 1000;
 
 	if (first_run)
 		first_run = false;
@@ -818,7 +792,7 @@ static int s5pv210_cpufreq_resume(struct cpufreq_policy *policy)
 
 	if (level == CPUFREQ_TABLE_END) { /* Not found */
 		pr_err("[%s:%d] clock speed does not match: "
-				"%d. Using L2 of 800MHz.\n",
+				"%d. Using L1 of 800MHz.\n",
 				__FILE__, __LINE__, rate);
 		level = L1;
 
@@ -831,6 +805,7 @@ static int s5pv210_cpufreq_resume(struct cpufreq_policy *policy)
 		exp_UV_mV[level] = -50;
 
 	previous_arm_volt = (dvs_conf[level].arm_volt - (exp_UV_mV[level]*1000));
+	freq_uv_table[level][2] = (int) previous_arm_volt / 1000;
 
 	return ret;
 }
@@ -876,7 +851,7 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 
 	if (level == CPUFREQ_TABLE_END) { /* Not found */
 		pr_err("[%s:%d] clock speed does not match: "
-				"%d. Using L2 of 800MHz.\n",
+				"%d. Using L1 of 800MHz.\n",
 				__FILE__, __LINE__, rate);
 		level = L1;
 	}
@@ -894,7 +869,7 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 			apll_freq_max = clk_info[index].fclk;
 		i++;
 	} while (freq_table[i].frequency != CPUFREQ_TABLE_END);
-	apll_freq_max /= APLLMX; /* in MHz */
+	apll_freq_max /= FREQMAX; /* in MHz */
 
 	memcpy(&s3c_freqs.old, &clk_info[level],
 			sizeof(struct s3c_freq));
@@ -903,17 +878,15 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 		exp_UV_mV[level] = -50;
 
 	previous_arm_volt = (dvs_conf[level].arm_volt - (exp_UV_mV[level]*1000));
+	freq_uv_table[level][2] = (int) previous_arm_volt / 1000;
 
 #ifdef CONFIG_DVFS_LIMIT
 	for(i = 0; i < DVFS_LOCK_TOKEN_NUM; i++)
 		g_dvfslockval[i] = MAX_PERF_LEVEL;
 #endif
 
-	cpufreq_frequency_table_cpuinfo(policy, freq_table);
-   //Set initial max speed to 1ghz for people who don't want to overclock
-     policy->max = 1000000;
-     policy->min = 100000;
-     return 0;
+	/* TODO: Re-add safe boot for overclock versions */
+	return cpufreq_frequency_table_cpuinfo(policy, freq_table);
 }
 
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,

@@ -6,10 +6,17 @@ if ! [ -e .config ]; then
  make $1
 fi
 
+<<<<<<< HEAD
 ROTTENREL=`cat release.txt`
 let ROTTENREL+=1
 echo $ROTTENREL > release.txt
 export KBUILD_BUILD_VERSION="0.4.3(0.4.4.9)-talonB-dev-b$ROTTENREL"
+=======
+# Linaro Android 4.5 (GCC 4.5.4) toolchain - http://www.linaro.org
+export CROSS_COMPILE="/opt/toolchains/android-toolchain-eabi-4.5/bin/arm-eabi-"
+
+export KBUILD_BUILD_VERSION="0.4.3-talon-dev"
+>>>>>>> fd069d43d08767f93cab516fcf8f2623fcf331ec
 
 #export LOCALVERSION="-I9000XWJVB-CL118186"
 #export LOCALVERSION="-I9000XWJVH-CL184813"
@@ -36,6 +43,10 @@ done
 
 rm -rf ./mod_inst
 unzip ./usr/prebuilt_ko.zip -d ./usr/initrd_files/lib/modules/
+
+cd drivers/misc/samsung_modemctl
+make
+cd ../../..
 
 make -j`grep 'processor' /proc/cpuinfo | wc -l`
 cp arch/arm/boot/zImage releasetools

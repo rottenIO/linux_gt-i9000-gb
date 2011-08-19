@@ -2382,24 +2382,12 @@ static struct i2c_board_info i2c_devs8[] __initdata = {
 static int fsa9480_init_flag = 0;
 static bool mtp_off_status;
 
-
-
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-extern u16 askonstatus;
-void fsa9480_usb_cb(bool attached)
-#else
 static void fsa9480_usb_cb(bool attached)
-#endif
 {
 	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
-#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
-	if ((gadget) && (askonstatus != 0xabcd)) {
-#else
-	if (gadget) {
-#endif
-//lat
 #if (defined(CONFIG_LATIN_ARIES_T) || defined(CONFIG_LATIN_ARIES_B) || defined(CONFIG_LATIN_ARIES_E) || defined(CONFIG_LATIN_ARIES_L)) // js0809.kim@LTN usb tethering enable after Mtp close
+	if (gadget) {
 		if (attached)
 			usb_gadget_vbus_connect(gadget);
 		else
@@ -2409,7 +2397,7 @@ static void fsa9480_usb_cb(bool attached)
 		}
 		}
 #else
-
+	if (gadget) {
 		if (attached)
 			usb_gadget_vbus_connect(gadget);
 		else
@@ -3741,9 +3729,8 @@ void otg_phy_init(void)
 	writel(readl(S3C_USBOTG_PHYTUNE) | (0x1<<20),
 			S3C_USBOTG_PHYTUNE);
 
-	/* set DC level as 6 (6%) */
-	writel((readl(S3C_USBOTG_PHYTUNE) & ~(0xf)) | (0x1<<2) | (0x1<<1),
-			S3C_USBOTG_PHYTUNE);
+	/* set DC level as 0xf (24%) */
+	writel(readl(S3C_USBOTG_PHYTUNE) | 0xf, S3C_USBOTG_PHYTUNE);
 }
 EXPORT_SYMBOL(otg_phy_init);
 

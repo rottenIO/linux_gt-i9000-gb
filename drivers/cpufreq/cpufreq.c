@@ -35,7 +35,9 @@
 int exp_UV_mV[5];
 extern unsigned int freq_uv_table[5][3];
 int enabled_freqs[5] = { 1, 1, 1, 1, 1 };
+#ifdef CONFIG_GPU_OC
 extern unsigned int gpu[5][2];
+#endif
 
 /**
  * The "cpufreq driver" - the arch- or hardware-dependent low
@@ -73,7 +75,7 @@ static DEFINE_PER_CPU(int, cpufreq_policy_cpu);
 static DEFINE_PER_CPU(struct rw_semaphore, cpu_policy_rwsem);
 
 #define lock_policy_rwsem(mode, cpu)					\
-int lock_policy_rwsem_##mode						\
+static int lock_policy_rwsem_##mode					\
 (int cpu)								\
 {									\
 	int policy_cpu = per_cpu(cpufreq_policy_cpu, cpu);		\
@@ -88,26 +90,22 @@ int lock_policy_rwsem_##mode						\
 }
 
 lock_policy_rwsem(read, cpu);
-EXPORT_SYMBOL_GPL(lock_policy_rwsem_read);
 
 lock_policy_rwsem(write, cpu);
-EXPORT_SYMBOL_GPL(lock_policy_rwsem_write);
 
-void unlock_policy_rwsem_read(int cpu)
+static void unlock_policy_rwsem_read(int cpu)
 {
 	int policy_cpu = per_cpu(cpufreq_policy_cpu, cpu);
 	BUG_ON(policy_cpu == -1);
 	up_read(&per_cpu(cpu_policy_rwsem, policy_cpu));
 }
-EXPORT_SYMBOL_GPL(unlock_policy_rwsem_read);
 
-void unlock_policy_rwsem_write(int cpu)
+static void unlock_policy_rwsem_write(int cpu)
 {
 	int policy_cpu = per_cpu(cpufreq_policy_cpu, cpu);
 	BUG_ON(policy_cpu == -1);
 	up_write(&per_cpu(cpu_policy_rwsem, policy_cpu));
 }
-EXPORT_SYMBOL_GPL(unlock_policy_rwsem_write);
 
 
 /* internal prototypes */
@@ -657,16 +655,16 @@ static ssize_t show_scaling_setspeed(struct cpufreq_policy *policy, char *buf)
  */
 
 static ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf) {
-
 	return sprintf(buf, "%d %d %d %d %d\n", exp_UV_mV[0], exp_UV_mV[1], exp_UV_mV[2], exp_UV_mV[3], exp_UV_mV[4]);
+
 }
 
 static ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 					const char *buf, size_t count) {
-
 	unsigned int ret = -EINVAL;
 
 	ret = sscanf(buf, "%d %d %d %d %d", &exp_UV_mV[0], &exp_UV_mV[1], &exp_UV_mV[2], &exp_UV_mV[3], &exp_UV_mV[4]);
+
 	if(ret != 1) {
 		return -EINVAL;
 	}
@@ -676,7 +674,6 @@ static ssize_t store_UV_mV_table(struct cpufreq_policy *policy,
 
 static ssize_t show_frequency_voltage_table(struct cpufreq_policy *policy,
 						char *buf) {
-	
 	return sprintf(buf,
 	"%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n%d %d %d\n",
 	freq_uv_table[0][0], freq_uv_table[0][1], freq_uv_table[0][2],
@@ -710,18 +707,14 @@ static ssize_t show_states_enabled_table(struct cpufreq_policy *policy, char *bu
 }
 
 static ssize_t store_states_enabled_table(struct cpufreq_policy *policy, const char *buf, int count) {
-
-
 	unsigned int ret = -EINVAL;
 
 	ret = sscanf(buf, "%d %d %d %d %d", &enabled_freqs[0], &enabled_freqs[1], &enabled_freqs[2], &enabled_freqs[3], &enabled_freqs[4]);
-
 	if(ret != 1) {
 		return -EINVAL;
 	}
 	else
 		return count;
-
 }
 
 #if defined(CONFIG_GPU_OC)
@@ -1980,8 +1973,7 @@ static int __cpuinit cpufreq_cpu_callback(struct notifier_block *nfb,
 	return NOTIFY_OK;
 }
 
-static struct notifier_block __refdata cpufreq_cpu_notifier =
-{
+static struct notifier_block __refdata cpufreq_cpu_notifier = {
     .notifier_call = cpufreq_cpu_callback,
 };
 

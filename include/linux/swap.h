@@ -192,7 +192,7 @@ struct swap_list_t {
 	int next;	/* swapfile to be used next */
 };
 
-/* Swap 50% full? Release swapcache more aggressively.. */
+/* Swap 50% full? */
 #define vm_swap_full() (nr_swap_pages*2 < total_swap_pages)
 
 /* linux/mm/page_alloc.c */
@@ -345,21 +345,18 @@ extern struct mm_struct *swap_token_mm;
 extern void grab_swap_token(struct mm_struct *);
 extern void __put_swap_token(struct mm_struct *);
 
-/* Only allow swap token to have effect if swap is full */
+/* Disable the swap token altogether. Not useful with zram. */
 static inline int has_swap_token(struct mm_struct *mm)
 {
-	return (mm == swap_token_mm && vm_swap_full());
+	return false;
 }
 
 static inline void put_swap_token(struct mm_struct *mm)
 {
-	if (has_swap_token(mm))
-		__put_swap_token(mm);
 }
 
 static inline void disable_swap_token(void)
 {
-	put_swap_token(swap_token_mm);
 }
 
 #ifdef CONFIG_CGROUP_MEM_RES_CTLR

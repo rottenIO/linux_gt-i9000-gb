@@ -75,7 +75,6 @@
 #define GPIO_BOOT_MODE			S5PV210_GPB(4)
 
 #define GPIO_WLAN_BT_EN			S5PV210_GPB(5)
-#define GPIO_BT_EN			S5PV210_GPB(5)
 
 #if defined(CONFIG_LATIN_ARIES_TV) //latin-feature (DTV) added
 #define GPIO_BT_nRST		S5PV210_GPB(6)
