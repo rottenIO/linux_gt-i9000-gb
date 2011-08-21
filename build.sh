@@ -6,18 +6,15 @@ if ! [ -e .config ]; then
  make $1
 fi
 
-<<<<<<< HEAD
 ROTTENREL=`cat release.txt`
 let ROTTENREL+=1
 echo $ROTTENREL > release.txt
-export KBUILD_BUILD_VERSION="0.4.3(0.4.4.9)-talonB-dev-b$ROTTENREL"
-=======
+export KBUILD_BUILD_VERSION="0.4.3-talonB-b$ROTTENREL"
+
 # Linaro Android 4.5 (GCC 4.5.4) toolchain - http://www.linaro.org
 export CROSS_COMPILE="/opt/toolchains/android-toolchain-eabi-4.5/bin/arm-eabi-"
 
-export KBUILD_BUILD_VERSION="0.4.3-talon-dev"
->>>>>>> fd069d43d08767f93cab516fcf8f2623fcf331ec
-
+#export KBUILD_BUILD_VERSION="0.4.3-talon-dev"
 #export LOCALVERSION="-I9000XWJVB-CL118186"
 #export LOCALVERSION="-I9000XWJVH-CL184813"
 #export LOCALVERSION="-I9000XXJVP-CL264642"
