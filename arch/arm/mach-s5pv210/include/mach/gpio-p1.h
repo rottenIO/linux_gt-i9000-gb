@@ -1,7 +1,16 @@
-#ifndef __GPIO_ARIES_H_
-#define __GPIO_ARIES_H_
+/* linux/arch/arm/mach-s5pv210/include/mach/gpio-p1.h
+ *
+ * Copyright (c) 2010 Samsung Electronics Co., Ltd.
+ *    http://www.samsung.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
 
-//#include <mach/gpio.h>
+#ifndef __GPIO_P1_H_
+#define __GPIO_P1_H_
+
 #if defined(CONFIG_LATIN_ARIES_TV)
 #ifndef CONFIG_LATIN_REV_06 // DerekJi: 2010.07.27 for LATIN HW Rev06
 #define CONFIG_LATIN_REV_06
@@ -751,5 +760,5 @@
 
 #define _3_GPIO_TOUCH_CE		S5PV210_GPJ3(3)
 #endif
-/* end of __GPIO_ARIES_H_ */
+/* end of __GPIO_P1_H_ */
 
