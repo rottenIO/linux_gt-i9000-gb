@@ -38,7 +38,17 @@
 #include <linux/suspend.h>
 #endif
 #include "s3cfb.h"
-#if defined(CONFIG_ARIES_EUR)
+
+
+//[[ hanson.jung 2011.02.17 latin build
+#if defined(CONFIG_LATIN_ARIES_T)
+#include "logo_rgb24_wvga_portrait_S1_LTN_T.h"
+#elif defined(CONFIG_LATIN_ARIES_B)
+#include "logo_rgb24_wvga_portrait_S1_LTN_B.h"
+#elif defined(CONFIG_LATIN_ARIES_L)
+#include "logo_rgb24_wvga_portrait_S1_LTN_L.h"
+//]]
+#elif defined(CONFIG_ARIES_EUR)
 #include "logo_rgb24_wvga_portrait.h"
 #elif defined(CONFIG_ARIES_NTT)
 #include "logo_rgb24_wvga_portrait_docomo.h"
